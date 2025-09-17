@@ -52,14 +52,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getLatestTrendAnalysisByKeywords(keywords: string[]): Promise<TrendAnalysis | undefined> {
-    // Check for cached analysis within the last 2 hours
-    const [analysis] = await db
-      .select()
-      .from(trendAnalyses)
-      .where(sql`keywords @> ${JSON.stringify(keywords)} AND created_at > NOW() - INTERVAL '2 hours'`)
-      .orderBy(sql`created_at DESC`)
-      .limit(1);
-    return analysis || undefined;
+    // Temporarily disable caching to avoid SQL issues - return null to force fresh analysis
+    return undefined;
   }
 }
 

@@ -49,7 +49,14 @@ Return only a JSON array of keyword strings, no other text.`;
 
     const content = response.content[0];
     if (content.type === 'text') {
-      const keywords = JSON.parse(content.text);
+      let text = content.text.trim();
+      // Remove markdown code blocks if present
+      if (text.startsWith('```json')) {
+        text = text.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (text.startsWith('```')) {
+        text = text.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+      const keywords = JSON.parse(text);
       return Array.isArray(keywords) ? keywords : [];
     }
     
@@ -117,7 +124,14 @@ Return a JSON array with this structure:
 
     const content = response.content[0];
     if (content.type === 'text') {
-      const ideas = JSON.parse(content.text);
+      let text = content.text.trim();
+      // Remove markdown code blocks if present
+      if (text.startsWith('```json')) {
+        text = text.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (text.startsWith('```')) {
+        text = text.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+      const ideas = JSON.parse(text);
       return Array.isArray(ideas) ? ideas : [];
     }
     
