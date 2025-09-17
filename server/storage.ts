@@ -1,6 +1,6 @@
 import { businesses, trendAnalyses, generatedContent, type Business, type InsertBusiness, type TrendAnalysis, type InsertTrendAnalysis, type GeneratedContent, type InsertGeneratedContent } from "@shared/schema";
 import { db } from "./db";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, and, desc } from "drizzle-orm";
 
 export interface IStorage {
   createBusiness(business: InsertBusiness): Promise<Business>;
@@ -52,8 +52,29 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getLatestTrendAnalysisByKeywords(keywords: string[]): Promise<TrendAnalysis | undefined> {
-    // Temporarily disable caching to avoid SQL issues - return null to force fresh analysis
-    return undefined;
+    try {
+      // Check for cached analysis within the last 2 hours
+      const [analysis] = await db
+        .select()
+        .from(trendAnalyses)
+        .where(and(
+          sql`${trendAnalyses.keywords} @> ${JSON.stringify(keywords)}::jsonb`,
+          sql`${trendAnalyses.createdAt} > NOW() - INTERVAL '2 hours'`
+        ))
+        .orderBy(desc(trendAnalyses.createdAt))
+        .limit(1);
+      
+      if (analysis) {
+        console.log('Cache hit: Found cached analysis for keywords:', keywords);
+        return analysis;
+      } else {
+        console.log('Cache miss: No cached analysis found for keywords:', keywords);
+        return undefined;
+      }
+    } catch (error) {
+      console.error('Error checking cached analysis:', error.message || error);
+      return undefined; // Return undefined on error to force fresh analysis
+    }
   }
 }
 

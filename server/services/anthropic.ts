@@ -21,58 +21,24 @@ export async function generateKeywords(businessData: {
   targetAudience: string;
   servicesOffered: string;
 }): Promise<string[]> {
-  const prompt = `You are a UK marketing expert specializing in social media trends and content creation. Given the following business information, generate 6-8 highly relevant keywords that would be useful for trend analysis and social media content creation.
-
-Business Details:
-- Name: ${businessData.businessName}
-- Type: ${businessData.businessType}
-- Location: ${businessData.ukCity}, UK
-- Industry: ${businessData.industry}
-- Target Audience: ${businessData.targetAudience}
-- Services: ${businessData.servicesOffered}
-
-Generate keywords that are:
-1. Relevant to the business and industry
-2. Include location-specific terms when appropriate
-3. Mix general industry terms with specific service offerings
-4. Consider current UK market trends and consumer behavior
-5. Include both broad and niche keywords
-
-Return only a JSON array of keyword strings, no other text.`;
-
-  try {
-    const response = await anthropic.messages.create({
-      model: DEFAULT_MODEL_STR,
-      max_tokens: 1024,
-      messages: [{ role: 'user', content: prompt }],
-    });
-
-    const content = response.content[0];
-    if (content.type === 'text') {
-      let text = content.text.trim();
-      // Remove markdown code blocks if present
-      if (text.startsWith('```json')) {
-        text = text.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-      } else if (text.startsWith('```')) {
-        text = text.replace(/^```\s*/, '').replace(/\s*```$/, '');
-      }
-      const keywords = JSON.parse(text);
-      return Array.isArray(keywords) ? keywords : [];
-    }
-    
-    throw new Error('Invalid response format');
-  } catch (error) {
-    console.error('Error generating keywords:', error);
-    // Fallback keywords based on business type and location
-    return [
-      businessData.businessType.toLowerCase(),
-      `${businessData.ukCity.toLowerCase()} ${businessData.businessType.toLowerCase()}`,
-      businessData.industry.toLowerCase(),
-      'local business',
-      'uk business',
-      `${businessData.businessType.toLowerCase()} near me`
-    ];
-  }
+  // AI functionality disabled - generate basic keywords based on business data
+  console.log('Generating basic keywords (AI disabled) for:', businessData.businessName);
+  
+  const basicKeywords = [
+    businessData.businessType.toLowerCase(),
+    `${businessData.ukCity.toLowerCase()} ${businessData.businessType.toLowerCase()}`,
+    businessData.industry.toLowerCase(),
+    'local business',
+    'uk business',
+    `${businessData.businessType.toLowerCase()} near me`,
+    businessData.ukCity.toLowerCase(),
+    `${businessData.industry.toLowerCase()} uk`
+  ];
+  
+  // Remove duplicates and filter out empty strings
+  const uniqueKeywords = [...new Set(basicKeywords.filter(k => k.trim().length > 0))];
+  
+  return uniqueKeywords;
 }
 
 export async function generatePostIdeas(
@@ -84,62 +50,55 @@ export async function generatePostIdeas(
     bbcArticles: any[];
   }
 ): Promise<any[]> {
-  const prompt = `You are a UK social media content strategist. Based on the business information and current trend data, generate 5-7 content ideas that connect trending topics to business opportunities.
-
-Business: ${businessData.businessName} (${businessData.businessType}) in ${businessData.ukCity}
-Industry: ${businessData.industry}
-Target Audience: ${businessData.targetAudience}
-Services: ${businessData.servicesOffered}
-
-Current Trends:
-Google Trends: ${JSON.stringify(trendData.googleTrends.slice(0, 5))}
-X.com Trends: ${JSON.stringify(trendData.xcomTrends.slice(0, 5))}
-Reddit Discussions: ${JSON.stringify(trendData.redditDiscussions.slice(0, 3))}
-BBC Articles: ${JSON.stringify(trendData.bbcArticles.slice(0, 3))}
-
-Generate content ideas that:
-1. Connect current trends to the business naturally
-2. Provide genuine value to the target audience
-3. Are timely and relevant to UK market
-4. Consider seasonal or cultural factors
-5. Include a relevance score (0.1-1.0)
-
-Return a JSON array with this structure:
-[
-  {
-    "id": "idea_1",
-    "concept": "Brief idea description",
-    "trendSource": "Which trend/source inspired this",
-    "relevanceScore": 0.8,
-    "reasoning": "Why this connects trends to business"
-  }
-]`;
-
-  try {
-    const response = await anthropic.messages.create({
-      model: DEFAULT_MODEL_STR,
-      max_tokens: 2048,
-      messages: [{ role: 'user', content: prompt }],
-    });
-
-    const content = response.content[0];
-    if (content.type === 'text') {
-      let text = content.text.trim();
-      // Remove markdown code blocks if present
-      if (text.startsWith('```json')) {
-        text = text.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-      } else if (text.startsWith('```')) {
-        text = text.replace(/^```\s*/, '').replace(/\s*```$/, '');
-      }
-      const ideas = JSON.parse(text);
-      return Array.isArray(ideas) ? ideas : [];
+  // AI functionality disabled - return basic template ideas based on trend data
+  console.log('Generating basic post ideas (AI disabled) for:', businessData.businessName);
+  
+  const basicIdeas = [
+    {
+      id: "idea_1",
+      concept: `Highlight ${businessData.businessName}'s unique ${businessData.businessType} offerings in ${businessData.ukCity}`,
+      trendSource: "Local Business Focus",
+      relevanceScore: 0.8,
+      reasoning: "Showcasing local business strengths appeals to community-focused customers"
+    },
+    {
+      id: "idea_2", 
+      concept: `Share customer testimonials and success stories from ${businessData.targetAudience}`,
+      trendSource: "Customer Engagement",
+      relevanceScore: 0.7,
+      reasoning: "Social proof helps build trust with potential customers"
+    },
+    {
+      id: "idea_3",
+      concept: `Showcase behind-the-scenes content of ${businessData.servicesOffered}`,
+      trendSource: "Authenticity Trend",
+      relevanceScore: 0.75,
+      reasoning: "Transparency in business operations builds customer connection"
     }
-    
-    throw new Error('Invalid response format');
-  } catch (error) {
-    console.error('Error generating post ideas:', error);
-    return [];
+  ];
+  
+  // Add trend-specific ideas if we have trend data
+  if (trendData.googleTrends && trendData.googleTrends.length > 0) {
+    basicIdeas.push({
+      id: "idea_4",
+      concept: `Create content around trending searches related to ${businessData.businessType}`,
+      trendSource: "Google Trends",
+      relevanceScore: 0.6,
+      reasoning: "Leveraging search trends can increase visibility"
+    });
   }
+  
+  if (trendData.bbcArticles && trendData.bbcArticles.length > 0) {
+    basicIdeas.push({
+      id: "idea_5",
+      concept: `Share insights on how current UK news affects ${businessData.industry}`,
+      trendSource: "BBC News",
+      relevanceScore: 0.65,
+      reasoning: "Connecting business to current events shows industry awareness"
+    });
+  }
+  
+  return basicIdeas;
 }
 
 export async function generatePlatformContent(
@@ -147,49 +106,20 @@ export async function generatePlatformContent(
   idea: any,
   platform: string
 ): Promise<string> {
-  const platformSpecs = {
-    twitter: 'Twitter: 280 characters max, engaging, uses relevant hashtags, conversational tone',
-    instagram: 'Instagram: Longer caption with emojis, multiple hashtags, storytelling approach, line breaks for readability',
-    facebook: 'Facebook: Longer form content, community-focused, detailed information, call-to-action'
-  };
-
-  const prompt = `Create ${platform} content for this business and idea:
-
-Business: ${businessData.businessName} (${businessData.businessType}) in ${businessData.ukCity}
-Target Audience: ${businessData.targetAudience}
-Services: ${businessData.servicesOffered}
-
-Content Idea: ${idea.concept}
-Trend Connection: ${idea.trendSource}
-Reasoning: ${idea.reasoning}
-
-Platform Requirements: ${platformSpecs[platform as keyof typeof platformSpecs]}
-
-Create engaging, authentic content that:
-1. Connects the trend to the business naturally
-2. Speaks directly to the target audience
-3. Includes appropriate UK spelling and terminology
-4. Maintains professional but approachable tone
-5. Includes relevant hashtags and calls-to-action
-6. Follows platform best practices
-
-Return only the final content text, no explanations or quotes.`;
-
-  try {
-    const response = await anthropic.messages.create({
-      model: DEFAULT_MODEL_STR,
-      max_tokens: 1024,
-      messages: [{ role: 'user', content: prompt }],
-    });
-
-    const content = response.content[0];
-    if (content.type === 'text') {
-      return content.text.trim();
-    }
+  // AI functionality disabled - return basic template content
+  console.log('Generating basic platform content (AI disabled) for:', platform);
+  
+  const businessName = businessData.businessName;
+  const city = businessData.ukCity;
+  const businessType = businessData.businessType;
+  
+  const templates = {
+    twitter: `🎯 ${idea.concept}\n\nVisit ${businessName} in ${city} for quality ${businessType} services!\n\n#${city} #${businessType.replace(' ', '')} #LocalBusiness #UK`,
     
-    throw new Error('Invalid response format');
-  } catch (error) {
-    console.error('Error generating platform content:', error);
-    return `Error generating content for ${platform}. Please try again.`;
-  }
+    instagram: `✨ ${idea.concept} ✨\n\n📍 Located in ${city}\n🏢 Specializing in ${businessData.servicesOffered}\n👥 Perfect for ${businessData.targetAudience}\n\nCome and experience what makes ${businessName} special!\n\n#${city} #${businessType.replace(' ', '')} #LocalBusiness #UK #Quality #Service`,
+    
+    facebook: `${idea.concept}\n\nAt ${businessName}, we're proud to serve the ${city} community with our ${businessData.servicesOffered}. Our focus on ${businessData.targetAudience} means we understand what you need.\n\nWhy choose us?\n✓ Local ${city} business\n✓ Experienced in ${businessData.industry}\n✓ Committed to quality service\n\nVisit us today and see the difference! Contact us for more information.\n\n#${city}Business #${businessType} #LocalSupport`
+  };
+  
+  return templates[platform as keyof typeof templates] || `Template content for ${platform}: ${idea.concept} - ${businessName} in ${city}`;
 }
