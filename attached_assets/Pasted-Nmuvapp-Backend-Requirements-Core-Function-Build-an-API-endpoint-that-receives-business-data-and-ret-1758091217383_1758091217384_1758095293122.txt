@@ -1,0 +1,249 @@
+Nmuvapp Backend Requirements
+Core Function
+Build an API endpoint that receives business data and returns trend analysis with content ideas.
+
+Input Data Expected
+Business name
+
+Business type (cafe, salon, plumber, etc.)
+
+UK city/town (dropdown: London, Manchester, Birmingham, Liverpool, Leeds, Sheffield, Bristol, Newcastle, Nottingham, Leicester, Coventry, Bradford, Edinburgh, Glasgow, Cardiff, Belfast, Brighton, Plymouth, Stoke-on-Trent, Wolverhampton, Derby, Southampton, Portsmouth, York, Oxford, Cambridge, Bath, Canterbury, Chester, Durham, Exeter, Lancaster, Norwich, Preston, Salisbury, Winchester, etc.)
+
+Industry (dropdown: Hospitality, Retail, Professional Services, Health & Beauty, etc.)
+
+Target audience (age range, demographics, local/tourists, etc.)
+
+Services offered
+
+Keywords (auto-generated from above fields, user can edit)
+
+Smart Keyword Generation
+AI analyzes business type + industry + services + target audience
+
+Auto-generates relevant keywords based on:
+
+Industry-specific terminology
+
+Local search patterns for that area
+
+Target audience language preferences
+
+Seasonal/trending terms for business type
+
+Present auto-generated keywords for user editing
+
+User can add/remove/modify keywords before trend analysis
+
+Refined keywords then used for all trend analysis
+
+Processing Tasks
+Google Trend Analysis
+
+Use suggestqueries.google.com/complete/search endpoint
+
+Query combinations of refined keywords + location
+
+Set parameters for UK (gl=GB, hl=en-GB)
+
+Collect autocomplete suggestions as trend indicators
+
+X.com Trend Analysis
+
+Scraping: Use a web scraping tool to scrape https://getdaytrends.com/united-kingdom/ for trending hashtags and topics.
+
+Data Collection: Collect the top trending hashtags and their associated tweet volumes (if available) for the UK.
+
+Note on Scraping: Since you have permission, you can implement a scheduled scraper that runs periodically to keep a local, up-to-date cache of the trending topics, which helps with performance and avoids repeated scraping.
+
+Reddit Analysis
+
+Connect to Reddit API with OAuth (100 requests/minute)
+
+Target UK subreddits: unitedkingdom, AskUK, britishproblems, ukbusiness
+
+Search for posts containing refined keywords
+
+Collect trending discussions relevant to business type
+
+Recommendation: Add Sentiment Analysis: Implement sentiment analysis to gauge the public's opinion (positive, negative, neutral) on a given topic within Reddit discussions. This allows for a more nuanced understanding of the trend, enabling the system to suggest content that addresses a specific sentiment, such as offering solutions to a common problem or promoting a popular idea.
+
+Recommendation: Expand Subreddit Discovery: Dynamically search for and include local and niche subreddits relevant to the business's city and industry. For instance, search for "bristol food" or "uk tech" to find more targeted communities and provide hyper-local insights.
+
+BBC Business News Analysis
+
+Connect to BBC News Business API (https://newsapi.org/v2/top-headlines with source=bbc-news)
+
+Alternative: BBC RSS feeds if API quota exceeded
+
+Pull recent UK business news articles (last 24-48 hours)
+
+Filter for stories relevant to business type/location using keyword matching
+
+Extract key business trends and economic indicators
+
+Recommendation: Integrate Local News Sources: Supplement the BBC News Business API with local news APIs or RSS feeds from the specific UK city to ensure the business receives locally relevant content ideas. National business news is helpful, but local events, economic developments, and community news often provide more direct and actionable content opportunities for a small business.
+
+Recommendation: Use Named Entity Recognition (NER): Instead of just using keyword matching, apply Named Entity Recognition to the news articles to identify and categorize specific entities like people, organizations, events, and locations. This allows for more precise connections between a news story and a business. For example, a news story about a new park opening could be linked directly to a nearby cafe.
+
+Intelligent Trend Connection
+
+Analyze all sources to find logical connections between trends and business
+
+Match current events with business opportunities
+
+Identify relevant keywords and timing for content
+
+Ensure authentic connection between trending topics and business context
+
+Post Idea Generation
+
+Send analyzed trends + business data to Claude API
+
+Generate 5-8 brief, punchy post concepts (4-6 words each)
+
+Each idea shows the trend connection source
+
+Present as selectable bubble format for user choice
+
+Platform Content Creation
+
+Receive user's selected post ideas and chosen platforms
+
+Create platform-specific versions (Twitter, Instagram, Facebook, or all)
+
+Optimize content for each platform's requirements and audience
+
+Ensure UK audience focus and local relevance
+
+Error Handling & Fallbacks
+API failures: If Reddit/BBC APIs fail, continue with available data sources
+
+Timeout limits: Maximum 5 minutes processing time before returning partial results
+
+Content filtering: Exclude inappropriate news topics for family businesses
+
+Rate limit management: Queue requests during high usage periods
+
+Fallback sources: Use RSS feeds if APIs are unavailable
+
+Caching Strategy
+Trend data: Cache Google/Reddit/X trends for 2 hours to reduce API calls/scraping
+
+News articles: Cache BBC news for 4 hours (business news changes slower)
+
+Generated ideas: Cache completed analysis for 1 hour per business type/location combo
+
+Performance: Aim for <30 second response time for cached results
+
+Data Processing Requirements
+Keyword matching: Use fuzzy matching for business terms in news/Reddit
+
+Relevance scoring: Rank trends by connection strength to business
+
+Content filtering: Remove political/controversial topics unless directly business-relevant
+
+Language processing: Handle UK spelling variants and colloquialisms
+
+Output Format
+First API call (/analyze-trends) - Return JSON:
+
+JSON
+
+{
+  "business_data": { "original input" },
+  "trends_found": {
+    "google_suggestions": ["array of suggestions"],
+    "reddit_discussions": [{"title": "post", "score": 123, "subreddit": "name"}],
+    "bbc_articles": [{"headline": "title", "relevance_score": 0.8, "url": "link"}],
+    "xcom_trends": ["array of trending hashtags"]
+  },
+  "post_ideas": [
+    {
+      "id": "idea_1",
+      "concept": "Cost of living coffee tips",
+      "trend_source": "BBC: UK inflation report",
+      "relevance_score": 0.9
+    }
+  ],
+  "processing_time": "2.3 minutes",
+  "cached": false
+}
+Second API call (/generate-posts) - Return JSON:
+
+JSON
+
+{
+  "selected_ideas": ["idea_1", "idea_3"],
+  "platforms": ["twitter", "instagram", "facebook"],
+  "generated_content": {
+    "idea_1": {
+      "twitter": "280 char post with hashtags",
+      "instagram": "engaging caption with emojis",
+      "facebook": "longer conversational post"
+    }
+  }
+}
+Front-End Requirements
+Simple, functional interface - prioritize usability over visual design
+
+Basic form for business input with dropdowns for city/industry
+
+Clean display of auto-generated keywords with edit capability
+
+Bubble selection interface for post ideas (clickable concepts)
+
+Platform checkboxes (Facebook, X.com, Instagram, or all)
+
+Results display area for generated content
+
+No fancy animations or complex UI - focus on workflow efficiency
+
+Mobile-responsive but desktop-first approach
+
+API Requirements
+POST endpoint /analyze-trends for initial trend analysis
+
+POST endpoint /generate-posts for creating platform content from selected ideas
+
+Accept JSON input with business details
+
+Process for 2-3 minutes for trend analysis (expected)
+
+Return structured JSON response with selectable post ideas
+
+Handle user selections and generate final platform content
+
+Handle errors gracefully
+
+Environment Setup Needed
+Anthropic API key for Claude
+
+Reddit API credentials (client ID, secret, user agent)
+
+News API key for BBC access (free tier: 1000 requests/day)
+
+Web server to handle HTTP requests
+
+JSON processing capabilities
+
+Caching system (in-memory or simple database)
+
+Performance & Analytics
+Response times: <30 seconds for cached, <5 minutes for fresh analysis
+
+Success metrics: Track which post ideas get selected most often
+
+Usage monitoring: Log API call volumes and success rates
+
+User feedback: Track which generated posts perform well on social media
+
+Integration Point
+Must work with Make.com webhook:
+
+Receive POST requests with business data
+
+Send back processed results for orchestration workflow
+
+Handle webhook timeouts gracefully
+
+Support retry logic for failed requests
